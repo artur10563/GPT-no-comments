@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "GPT no comments",
+    "version": "1.0",
+    "description": "Removes comments from Chat GPT code blocks",
+    "permissions": [
+        "activeTab"
+    ],
+    "background": {
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://chatgpt.com/c/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}
