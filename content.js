@@ -56,6 +56,7 @@ function removeComments(text, language) {
   }
 
   text = text.trim();
+  text = text.replace(/\n\s*\n/g, "\n");
   return text;
 }
 
