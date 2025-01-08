@@ -5,54 +5,58 @@ document.body.addEventListener("click", async (event) => {
   }
 });
 
+document.addEventListener("copy", async (event) => {
+  const selection = window.getSelection();
+  if (selection && selection.toString()) {
+    const selectedText = selection.toString();
+    let pre = null;
+
+    // Traverse up the DOM tree if the anchorNode is a Text node
+    if (
+      selection.anchorNode &&
+      selection.anchorNode.nodeType === Node.TEXT_NODE
+    ) {
+      pre = selection.anchorNode.parentElement.closest("pre");
+    }
+
+    if (pre) {
+      const languageDiv = pre.querySelector(`.text-token-text-secondary`);
+      if (!languageDiv) {
+        console.error("Language information is missing.");
+        return;
+      }
+
+      const language = languageDiv.textContent.trim().toLowerCase();
+      const cleanedText = removeComments(selectedText, language);
+
+      event.preventDefault();
+
+      event.clipboardData.setData("text/plain", cleanedText);
+
+      console.log("Text cleaned and copied successfully.");
+    }
+  }
+});
+
 function removeComments(text, language) {
-  //  (// ...)
-  const jsSingleLineCommentRegex = /\/\/.*$/gm;
+  const commentPatterns = {
+    csharp: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+    javascript: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+    typescript: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+    css: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+    sql: [/--.*$/gm],
+    html: [/<!--[\s\S]*?-->/g],
+    python: [/^\s*#.*$/gm, /'''[\s\S]*?'''/g, /"""[\s\S]*?"""/g],
+  };
 
-  // (/* ... */)
-  const jsMultiLineCommentRegex = /\/\*[\s\S]*?\*\//g;
+  const patterns = commentPatterns[language];
 
-  // (-- ...)
-  const sqlSingleLineCommentRegex = /--.*$/gm;
-
-  //  (<!-- ... -->)
-  const htmlCommentRegex = /<!--[\s\S]*?-->/g;
-
-  // (# ...)
-  const pythonSingleLineCommentRegex = /^\s*#.*$/gm;
-
-  // (''' ... ''')
-  const pythonMultiLineCommentRegex1 = /'''[\s\S]*?'''/g;
-
-  // ( """ ... """)
-  const pythonMultiLineCommentRegex2 = /"""[\s\S]*?"""/g;
-
-  switch (language) {
-    case "csharp":
-    case "javascript":
-    case "typescript":
-    case "css":
-      text = text.replace(jsSingleLineCommentRegex, "");
-      text = text.replace(jsMultiLineCommentRegex, "");
-      break;
-
-    case "sql":
-      text = text.replace(sqlSingleLineCommentRegex, "");
-      break;
-
-    case "html":
-      text = text.replace(htmlCommentRegex, "");
-      break;
-
-    case "python":
-      text = text.replace(pythonSingleLineCommentRegex, "");
-      text = text.replace(pythonMultiLineCommentRegex1, "");
-      text = text.replace(pythonMultiLineCommentRegex2, "");
-      break;
-
-    default:
-      console.log("Unsupported language:", language);
-      break;
+  if (patterns) {
+    patterns.forEach((regex) => {
+      text = text.replace(regex, "");
+    });
+  } else {
+    console.log("Unsupported language:", language);
   }
 
   text = text.trim();
